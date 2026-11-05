@@ -1405,8 +1405,264 @@ class _StatCard extends StatelessWidget {
 
 บันทึกรูปผลการทดลอง
 ```image
-บันทึกรูปโค้ด และรูปผลการทดลองที่นี่ (กรณีที่ยังไม่สามารถรันได้ ให้ทดลองจนถึงขั้นตอนที่สามารถ capture รูปได้และบันทึกรูปไว้ในส่วนนี้)
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../models/destination.dart';
+import '../widgets/destination_card.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // แสดง Destination ทั้งหมด
+    final featured = sampleDestinations;
+
+    // เรียงลำดับ Rating จากมากไปน้อย และเลือก 3 อันดับแรก
+    final topRated = [...sampleDestinations]
+      ..sort((a, b) => b.rating.compareTo(a.rating));
+    final topThree = topRated.take(3).toList();
+
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+              horizontal: 20, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment:
+                    MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'สวัสดี, นักเดินทาง! 👋',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const Text(
+                        'ไปไหนดีวันนี้?',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  CircleAvatar(
+                    backgroundColor: Colors.blue.shade100,
+                    child: const Icon(
+                      Icons.person,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Featured Section
+              Row(
+                mainAxisAlignment:
+                    MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'แนะนำสำหรับคุณ',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => context.go('/explore'),
+                    child: const Text('ดูทั้งหมด'),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // แสดงรายการ Destination ในแนวนอน
+              SizedBox(
+                height: 280,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: featured.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(width: 16),
+                  itemBuilder: (context, index) {
+                    final dest = featured[index];
+
+                    return SizedBox(
+                      width: 220,
+                      child: DestinationCard(
+                        destination: dest,
+                        onTap: () => context.pushNamed(
+                          'destination-detail',
+                          pathParameters: {'id': dest.id},
+                          extra: dest,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Quick Stats
+              const Text(
+                'สถิติการเดินทาง',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatCard(
+                      icon: Icons.flight,
+                      label: 'Trip',
+                      value: '5',
+                      color: Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _StatCard(
+                      icon: Icons.place,
+                      label: 'Country',
+                      value: '3',
+                      color: Colors.orange,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _StatCard(
+                      icon: Icons.favorite,
+                      label: 'Saved',
+                      value: '12',
+                      color: Colors.pink,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+
+              // Top Rated Reviews
+              const Text(
+                'รีวิวยอดนิยม',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // ListView ซ้อนอยู่ใน SingleChildScrollView
+              // จึงต้องกำหนด shrinkWrap และปิดการ Scroll ของ ListView
+              // เพื่อให้ SingleChildScrollView เป็นตัวเลื่อนหน้าจอหลักเพียงตัวเดียว
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: topThree.length,
+                itemBuilder: (context, index) {
+                  final destination = topThree[index];
+
+                  return ListTile(
+                    leading: CircleAvatar(
+                      child: Text('${index + 1}'),
+                    ),
+                    title: Text(destination.name),
+                    subtitle: Text(destination.country),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.star,
+                          color: Colors.amber,
+                          size: 18,
+                        ),
+                        Text(destination.rating.toString()),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Widget สำหรับแสดงสถิติการเดินทาง
+class _StatCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 ```
+**สรุปผลการทดลอง**
+
+จากการทดลองได้สร้างหน้าจอ Home สำหรับแอปพลิเคชัน Travel App โดยใช้ Widget ต่าง ๆ ของ Flutter ในการจัดวางองค์ประกอบของหน้าจอ ประกอบด้วยส่วนแสดงข้อความต้อนรับ รายการสถานที่ท่องเที่ยวแนะนำในรูปแบบแนวนอน และส่วนแสดงสถิติการเดินทาง นอกจากนี้ยังได้เพิ่มส่วนรีวิวยอดนิยม โดยนำข้อมูล Destination มาเรียงลำดับตามคะแนน Rating จากมากไปน้อย และแสดงรายการที่มีคะแนนสูงสุด 3 อันดับ โดยใช้ ListView ร่วมกับคุณสมบัติ shrinkWrap และ NeverScrollableScrollPhysics เพื่อให้สามารถแสดงรายการภายใน SingleChildScrollView ได้อย่างเหมาะสม
+
 
 สร้างไฟล์ `lib/screens/saved_screen.dart`:
 
@@ -1658,8 +1914,206 @@ final GoRouter appRouter = GoRouter(
 
 บันทึกรูปผลการทดลอง
 ```image
-บันทึกรูปโค้ด และรูปผลการทดลองที่นี่ (กรณีที่ยังไม่สามารถรันได้ ให้ทดลองจนถึงขั้นตอนที่สามารถ capture รูปได้และบันทึกรูปไว้ในส่วนนี้)
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../models/destination.dart';
+import '../screens/home_screen.dart';
+import '../screens/explore_screen.dart';
+import '../screens/destination_detail_screen.dart';
+import '../screens/saved_screen.dart';
+import '../screens/profile_screen.dart';
+import '../screens/about_screen.dart';
+
+// Scaffold สำหรับแสดง Bottom Navigation Bar
+class ScaffoldWithNavBar extends StatelessWidget {
+  final StatefulNavigationShell navigationShell;
+
+  const ScaffoldWithNavBar({
+    super.key,
+    required this.navigationShell,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      // แสดงหน้าของ Branch ที่กำลังเลือก
+      body: navigationShell,
+
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: navigationShell.currentIndex,
+        onDestinationSelected: (index) {
+          // สลับ Branch โดยยังคง State ของแต่ละแท็บไว้
+          navigationShell.goBranch(
+            index,
+            initialLocation:
+                index == navigationShell.currentIndex,
+          );
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'หน้าหลัก',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.explore_outlined),
+            selectedIcon: Icon(Icons.explore),
+            label: 'สำรวจ',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.favorite_outline),
+            selectedIcon: Icon(Icons.favorite),
+            label: 'บันทึก',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'โปรไฟล์',
+          ),
+          // เพิ่มเมนูเกี่ยวกับตาม Checkpoint 5.1
+          NavigationDestination(
+            icon: Icon(Icons.info_outline),
+            selectedIcon: Icon(Icons.info),
+            label: 'เกี่ยวกับ',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// กำหนด Router หลักของแอป
+final GoRouter appRouter = GoRouter(
+  initialLocation: '/',
+  debugLogDiagnostics: true,
+
+  routes: [
+    StatefulShellRoute.indexedStack(
+      builder: (context, state, navigationShell) {
+        return ScaffoldWithNavBar(
+          navigationShell: navigationShell,
+        );
+      },
+
+      branches: [
+        // Branch 0: Home
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/',
+              name: 'home',
+              builder: (context, state) =>
+                  const HomeScreen(),
+            ),
+          ],
+        ),
+
+        // Branch 1: Explore และ Destination Detail
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/explore',
+              name: 'explore',
+              builder: (context, state) =>
+                  const ExploreScreen(),
+              routes: [
+                GoRoute(
+                  path: 'destinations/:id',
+                  name: 'destination-detail',
+                  builder: (context, state) {
+                    final id = state.pathParameters['id'];
+
+                    // ค้นหา Destination ด้วย ID
+                    final matches = sampleDestinations
+                        .where((d) => d.id == id)
+                        .toList();
+
+                    // ถ้าไม่พบข้อมูล ให้แสดงหน้าแจ้งเตือน
+                    if (matches.isEmpty) {
+                      return Scaffold(
+                        appBar: AppBar(
+                          title: const Text('ไม่พบข้อมูล'),
+                        ),
+                        body: const Center(
+                          child: Text(
+                            'ไม่พบข้อมูลที่ต้องการ',
+                            style: TextStyle(fontSize: 18),
+                          ),
+                        ),
+                      );
+                    }
+
+                    // ใช้ extra ก่อน หากไม่มีจึงใช้ข้อมูลจาก ID
+                    final destination =
+                        state.extra as Destination? ??
+                            matches.first;
+
+                    return DestinationDetailScreen(
+                      destination: destination,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+
+        // Branch 2: Saved
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/saved',
+              name: 'saved',
+              builder: (context, state) =>
+                  const SavedScreen(),
+            ),
+          ],
+        ),
+
+        // Branch 3: Profile
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/profile',
+              name: 'profile',
+              builder: (context, state) =>
+                  const ProfileScreen(),
+            ),
+          ],
+        ),
+
+        // Branch 4: About
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: '/about',
+              name: 'about',
+              builder: (context, state) =>
+                  const AboutScreen(),
+            ),
+          ],
+        ),
+      ],
+    ),
+  ],
+
+  // แสดงข้อความเมื่อไม่พบ Route ที่ตรงกับ URL
+  errorBuilder: (context, state) => Scaffold(
+    body: Center(
+      child: Text(
+        'ไม่พบหน้าที่ต้องการ: ${state.error}',
+      ),
+    ),
+  ),
+);
+
 ```
+**สรุปผลการทดลอง**
+
+จากการทดลองได้สร้าง Router Configuration โดยใช้ GoRouter ในการกำหนดเส้นทางการเปลี่ยนหน้าภายในแอปพลิเคชัน และใช้ StatefulShellRoute.indexedStack เพื่อจัดการ Bottom Navigation Bar ซึ่งประกอบด้วยหน้าหลัก หน้าสำรวจ หน้าบันทึก หน้าโปรไฟล์ และหน้าเกี่ยวกับ นอกจากนี้ยังได้กำหนด Sub-route สำหรับแสดงรายละเอียดสถานที่ท่องเที่ยว โดยรับค่า ID ผ่าน Path Parameters และตรวจสอบข้อมูลก่อนแสดงผล หากไม่พบข้อมูลจะแสดงข้อความแจ้งเตือนแทนการแสดงข้อมูลที่ไม่ถูกต้อง ทำให้การนำทางระหว่างหน้าต่าง ๆ มีความเป็นระบบและจัดการข้อผิดพลาดได้เหมาะสม
+
 
 
 #### ขั้นตอนที่ 5.2 — ตั้งค่า main.dart
